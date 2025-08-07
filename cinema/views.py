@@ -50,9 +50,12 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
         queryset = self.queryset
         if self.action == "list":
             queryset = queryset.select_related("movie", "cinema_hall")
+        elif self.action in ["retrieve", "create", "update", "partial_update"]:
+            queryset = queryset.select_related("movie", "cinema_hall")
         return queryset
 
     def get_serializer_class(self):
         if self.action == "list":
             return MovieSessionListSerializer
+        # Use the main serializer for create/update/retrieve
         return MovieSessionSerializer
