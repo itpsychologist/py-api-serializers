@@ -4,9 +4,7 @@ from cinema.models import (
     Actor,
     MovieSession,
     Genre,
-    Movie,
-    Order,
-    Ticket)
+    Movie)
 
 
 class CinemaHallSerializer(serializers.ModelSerializer):
@@ -18,7 +16,7 @@ class CinemaHallSerializer(serializers.ModelSerializer):
 class GenreSerializer(serializers.ModelSerializer):
     class Meta:
         model = Genre
-        fields = "__all__"
+        fields = ("id", "name")
 
 
 class ActorSerializer(serializers.ModelSerializer):
@@ -31,6 +29,12 @@ class MovieSerializer(serializers.ModelSerializer):
     genres = GenreSerializer(many=True, read_only=True)
     actors = ActorSerializer(many=True, read_only=True)
 
+    class Meta:
+        model = Movie
+        fields = ("id", "title", "description", "duration", "genres", "actors")
+
+
+class MovieCreateUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Movie
         fields = ("id", "title", "description", "duration", "genres", "actors")
@@ -53,53 +57,13 @@ class MovieListSerializer(MovieSerializer):
         fields = ("id", "title", "description", "duration", "genres", "actors")
 
 
-class OrderSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Order
-        fields = "__all__"
-
-
-class TicketSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Ticket
-        fields = "__all__"
-
-
 class MovieSessionSerializer(serializers.ModelSerializer):
     movie = MovieListSerializer(read_only=True)
     cinema_hall = CinemaHallSerializer(read_only=True)
 
-    # For write operations, accept IDs
-    movie_id = serializers.IntegerField(write_only=True)
-    cinema_hall_id = serializers.IntegerField(write_only=True)
-
     class Meta:
         model = MovieSession
         fields = ("id", "show_time", "movie", "cinema_hall")
-
-    def create(self, validated_data):
-        # Extract the IDs and create the instance
-        movie_id = validated_data.pop("movie_id")
-        cinema_hall_id = validated_data.pop("cinema_hall_id")
-
-        movie_session = MovieSession.objects.create(
-            movie_id=movie_id,
-            cinema_hall_id=cinema_hall_id,
-            **validated_data
-        )
-        return movie_session
-
-    def update(self, instance, validated_data):
-        # Handle updates with IDs if provided
-        if "movie_id" in validated_data:
-            instance.movie_id = validated_data.pop("movie_id")
-        if "cinema_hall_id" in validated_data:
-            instance.cinema_hall_id = validated_data.pop("cinema_hall_id")
-
-        for attr, value in validated_data.items():
-            setattr(instance, attr, value)
-        instance.save()
-        return instance
 
 
 class MovieSessionListSerializer(MovieSessionSerializer):
@@ -119,3 +83,9 @@ class MovieSessionListSerializer(MovieSessionSerializer):
             "movie_title",
             "cinema_hall_name",
             "cinema_hall_capacity")
+
+
+class MovieSessionCreateUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = MovieSession
+        fields = ("id", "show_time", "movie", "cinema_hall")
